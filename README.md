@@ -10,21 +10,15 @@ The backdrop also follows Claude: when you send a message, tiny characters spark
 
 ## Install
 
-At the prompt of a Claude Code terminal session:
+Type these at the Claude Code prompt (the desktop app takes them too), one after another:
 
 ```
-/plugin install stardust-tank --marketplace kurpsaki/stardust-tank
+/plugin marketplace add kurpsaki/stardust-tank
+/plugin install stardust-tank@stardust-tank
+/reload-plugins
 ```
 
-Answer `y` to add the marketplace, then pick a scope (user is first). From a shell:
-
-```bash
-claude plugin install stardust-tank --marketplace kurpsaki/stardust-tank
-```
-
-In the desktop app, where `/plugin` does not run: click + next to the prompt box, then Plugins, Add marketplace with `kurpsaki/stardust-tank`, then Add plugin.
-
-The backdrop appears in the desktop app from the next session (or after `/reload-plugins`). To turn it off, disable or uninstall the plugin and start a new session.
+The backdrop is drawn in the desktop app, in sessions that run on this computer (not in cloud environments). To turn it off, disable or uninstall the plugin (`/plugin`) and start a new session.
 
 ## Change the scene
 
