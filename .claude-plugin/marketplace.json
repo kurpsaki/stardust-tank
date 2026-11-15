@@ -1,0 +1,13 @@
+{
+  "name": "ascii-drift",
+  "owner": {
+    "name": "kurpsaki"
+  },
+  "description": "ascii-drift: a dark ASCII theme for the Claude desktop app, with drifting stardust and an ASCII goldfish.",
+  "plugins": [
+    {
+      "name": "ascii-drift",
+      "source": "./"
+    }
+  ]
+}

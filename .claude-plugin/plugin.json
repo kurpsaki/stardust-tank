@@ -1,0 +1,18 @@
+{
+  "name": "ascii-drift",
+  "version": "0.11.1",
+  "description": "Dark ASCII theme: fine stardust in three layers of depth with twinkling stars, a fine ASCII goldfish from real footage, and a sparkle of characters when Claude gets to work.",
+  "author": {
+    "name": "kurpsaki",
+    "url": "https://github.com/kurpsaki"
+  },
+  "homepage": "https://github.com/kurpsaki/ascii-drift",
+  "repository": "https://github.com/kurpsaki/ascii-drift",
+  "license": "MIT",
+  "keywords": [
+    "theme",
+    "ascii",
+    "dark"
+  ],
+  "types": "./types/index.d.ts"
+}
