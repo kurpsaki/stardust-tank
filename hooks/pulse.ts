@@ -9,83 +9,62 @@ import type { Pulse } from '../types'
 
 import { SCENE } from './scene.js'
 
-// 作業中: 星屑の3層と瞬く星を一段明るくする（星だけでは淡すぎて気づかれなかった）
-const BUSY_CSS = '#s1 g{fill:#3c434e}#s2 g{fill:#6a7486}#s3 g{fill:#a9b4c6}.st{fill:#ffffff}'
-
-// 送信した瞬間: 窓の下端に沿った帯で細かい ASCII が強く光り、下から上へ広がりながら2回瞬いて消える。
-// 経緯（2026-11-15、実機で）: 画面全体に文字を散らした版は「まばらでキラキラしていない」、模様で画面全体に敷いた版は
-// 「全体に出てしまう」と言われ、「入力欄のまわりだけ・もっと細かく・発光つよめ」になった。
-// 背景の絵は窓に合わせて上下を切り落とすので、絵の座標では入力欄の位置が決まらない。さらに入力欄の左右の位置は
-// サイドバーや右のパネルの開き具合で変わり、背景には知らされない（窓の中央に置いたらチャット欄の右外で光った）。
-// そこでユーザーと相談し、窓の下端に沿った帯全体で光らせる（入力欄がどこにあってもそのまわりが光る）。
-// 帯は窓の幅いっぱい・下端に揃う入れ子の <svg>（xMidYMax slice）に描く。
+// 作業中: 星屑の3層と瞬く星を一段明るくする（星だけでは淡すぎて気づかれなかった）。送信の瞬間はそこから強く光る（下）
+// 送信した瞬間: 背景の星屑そのものが強く光り、奥の細かい層から手前の層へ順に2回瞬いて、作業中の明るさに落ち着く。
+// 経緯（2026-11-15、実機で）: 別のきらめきの文字を重ねる案は、画面全体に散らすと「まばら」「全体に出てしまう」、
+// 入力欄のまわりに置こうとすると、入力欄の左右の位置（サイドバーや右のパネルで変わる）が背景に知らされず合わせられなかった。
+// ユーザーの「ダストでいい」で、どこにでもある星屑を光らせる形にした（チャット欄のまわりも自然に光る）。
+// 作業中は星屑の色を白に近い明るさにしておき、濃さ（opacity）で「光る→落ち着く」を作る。落ち着いた先は以前の作業中の明るさ。
 // 1回で終わるアニメを含むとデスクトップは背景を止める（2026-11-15 に実機で確認）。周期を長くした繰り返しにして、
-// 最初の数秒だけ光り、残りは見えないまま待つ。送信のたびに背景が描き直されるので、見た目は「送信ごとに1回」
-const RIPPLE_CYCLE = 300
-const pct = (secs: number) => `${((secs / RIPPLE_CYCLE) * 100).toFixed(3)}%`
+// 最初の数秒だけ光る。送信のたびに背景が描き直されるので、見た目は「送信ごとに1回」
+const FLASH_CYCLE = 300
+const pct = (secs: number) => `${((secs / FLASH_CYCLE) * 100).toFixed(3)}%`
 
-// 決まった並びにするための簡単な乱数（毎回同じ絵になる）
+// [層, 光った時の色, 落ち着いた濃さ, 光り始め（秒）]
+const DUST_FLASH = [
+  ['1', '#8a96a8', 0.42, 0.05],
+  ['2', '#c4d0e2', 0.55, 0.25],
+  ['3', '#ffffff', 0.68, 0.45],
+] as const
+
+const BUSY_CSS =
+  DUST_FLASH.map(([k, color, rest, t]) =>
+    `#s${k} g{fill:${color}}.ds${k} rect{opacity:${rest};animation:f${k} ${FLASH_CYCLE}s linear infinite}` +
+    `@keyframes f${k}{0%,${pct(t)}{opacity:${rest}}${pct(t + 0.2)}{opacity:1}${pct(t + 0.5)}{opacity:${rest}}` +
+    `${pct(t + 0.75)}{opacity:1}${pct(t + 1.8)},100%{opacity:${rest}}}`,
+  ).join('') + '.st{fill:#ffffff}@media (prefers-reduced-motion:reduce){.ds1 rect,.ds2 rect,.ds3 rect{opacity:.6}.rp{opacity:0}}'
+
+// さらに、画面のあちこちで細かいダストが弾ける（ユーザーの「画面ランダムのがいい」「細かいキラキラのダストが弾ける感じ」）。
+// 細かい粒を弾け1つ分の模様にし、点に縮めた所から一気に広げる。模様も一緒に広がるので、粒どうしが離れて飛び散って見える。
+// 弾ける瞬間に中心で白い星が光り、後ろに淡い青の大きな + を重ねて光のにじみにする（ぼかしの光の玉は使わない）。
+// 横長の窓では絵の上下が切れるので、縦は見えやすい中ほど（y 180〜820）に寄せる
 let seed = 0x5eed
 const rnd = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296)
-
-// 細かい粒の密集は模様で描く（1つずつ置くと文字数の上限を超える）。下端から高さの違う3段の帯を細かい文字の模様で塗り、
-// 下ほど重なって密に、上ほどまばらにする。帯は下から順に、低く縮めた所から上へ伸ばしつつ2回瞬かせる（下から上への波）。
-// [帯の高さ, タイルの幅, 高さ, 粒の数, 文字, 大きさの組, 角度, 始まり（秒）]
-const FIELDS = [
-  [80, 34, 24, 7, '.:+.', [5, 6], -11, 0.05],
-  [160, 58, 42, 7, '.+*:', [6, 8], 7, 0.22],
-  [270, 96, 70, 7, '+*.+', [8, 10], -4, 0.4],
-] as const
-const SIZES = [...new Set(FIELDS.flatMap(([, , , , , sizes]) => sizes))]
-
-const tile = (w: number, h: number, n: number, glyphs: string, sizes: readonly number[]) =>
-  Array.from({ length: n }, () => {
-    const fs = sizes[Math.floor(rnd() * sizes.length)]
-    return `<text class="e${fs}" x="${(rnd() * w).toFixed(0)}" y="${(rnd() * h).toFixed(0)}">${glyphs[Math.floor(rnd() * glyphs.length)]}</text>`
-  }).join('')
-
-// 原点は窓の下端の中央。帯は横に窓の外まで伸ばす（slice で左右が切れても端まで光る）
-const FIELD_SVG = FIELDS.map(
-  ([h, w, th, n, glyphs, sizes, angle], k) =>
-    `<pattern id="k${k}" width="${w}" height="${th}" patternUnits="userSpaceOnUse" patternTransform="rotate(${angle})">${tile(w, th, n, glyphs, sizes)}</pattern>` +
-    `<g class="k${k}"><rect x="-900" y="-${h}" width="1800" height="${h}" fill="url(#k${k})"/></g>`,
-).join('')
-
-// 低く縮めた所から上へ伸ばしつつ、2回瞬いて消える
-const burst = (k: number, t: number) =>
-  `.k${k}{opacity:0;animation:k${k} ${RIPPLE_CYCLE}s linear infinite}@keyframes k${k}{0%,${pct(t)}{opacity:0;transform:scale(1,.35)}` +
-  `${pct(t + 0.2)}{opacity:1}${pct(t + 0.45)}{opacity:.3}${pct(t + 0.7)}{opacity:1}` +
-  `${pct(t + 1.5)}{opacity:0;transform:scale(1,1.1)}100%{opacity:0;transform:scale(1,1.1)}}`
-
-// 特に明るい粒を少しだけ1つずつ、横幅いっぱいに置く。3つに1つは後ろに淡い青の大きな + を重ねて光のにじみにする
-// （ぼかしの光の玉は使わない）。下にある粒から順に光る
-const WAVES = 6
-const SPARKS = Array.from({ length: 17 }, (_, i) => {
-  const d = rnd() ** 1.4
-  const at = `x="${((i + rnd()) * (1560 / 17) - 780).toFixed(0)}" y="${(-d * 240 - 6).toFixed(0)}"`
-  const wave = Math.min(WAVES - 1, Math.floor(d * WAVES))
-  const halo = i % 3 === 0 ? `<text class="h a${i % 3} w${wave}" ${at}>+</text>` : ''
-  return halo + `<text class="a${i % 3} w${wave}" ${at}>${'*+*x'[i % 4]}</text>`
+const DELAYS = 8
+// 弾け1つ分の粒（模様のタイル1枚が弾け1つ分。繰り返さないので格子に見えない）。中心ほど密に、外ほどまばらに散らす
+const R = 60
+const DUST = Array.from({ length: 22 }, () => {
+  const r = R * 0.95 * rnd() ** 0.7
+  const th = rnd() * Math.PI * 2
+  return `<text class="u${1 + Math.floor(rnd() * 3)}" x="${(R + r * Math.cos(th)).toFixed(0)}" y="${(R + r * Math.sin(th)).toFixed(0)}">${".'.:+`*"[Math.floor(rnd() * 7)]}</text>`
 }).join('')
-const WAVE_CSS = Array.from({ length: WAVES }, (_, k) => `.w${k}{animation-delay:${(0.08 + k * 0.16).toFixed(2)}s}`).join('')
-
-const twinkle = (name: string, stops: readonly [number, number][]) =>
-  `.${name}{animation:${name} ${RIPPLE_CYCLE}s linear infinite}@keyframes ${name}{0%{opacity:0;transform:translate(0px,0px)}` +
-  stops.map(([t, o]) => `${pct(t)}{opacity:${o}}`).join('') +
-  `${pct(1.4)}{opacity:0;transform:translate(0px,-8px)}100%{opacity:0;transform:translate(0px,-8px)}}`
+const BURSTS = Array.from({ length: 12 }, () => {
+  const d = `d${Math.floor(rnd() * DELAYS)}`
+  return (
+    `<g transform="translate(${(60 + rnd() * 1480).toFixed(0)} ${(180 + rnd() * 640).toFixed(0)}) rotate(${(rnd() * 360).toFixed(0)})">` +
+    `<g class="b ${d}"><rect x="-${R}" y="-${R}" width="${R * 2}" height="${R * 2}" fill="url(#pd)"/></g><text class="c h ${d}">+</text><text class="c ${d}">*</text></g>`
+  )
+}).join('')
 
 const RIPPLE_CSS =
-  WAVE_CSS +
-  '.rp text{fill:#ffffff;text-anchor:middle}.s text{opacity:0}.a0{font-size:11px}.a1{font-size:9px}.a2{font-size:13px}.rp .h{fill:#8cc4ff;font-size:26px}' +
-  SIZES.map(fs => `.e${fs}{font-size:${fs}px}`).join('') +
-  FIELDS.map(([, , , , , , , t], k) => burst(k, t)).join('') +
-  twinkle('a0', [[0.1, 1], [0.35, 0.25], [0.6, 1], [1.1, 0]]) +
-  twinkle('a1', [[0.08, 1], [0.5, 0.6], [0.75, 1], [1.2, 0]]) +
-  twinkle('a2', [[0.15, 1], [0.3, 0.15], [0.5, 1], [1.0, 0]]) +
-  '@media (prefers-reduced-motion:reduce){.rp{opacity:0}}'
+  Array.from({ length: DELAYS }, (_, k) => `.d${k}{animation-delay:${(0.05 + k * 0.23).toFixed(2)}s}`).join('') +
+  '.rp text{fill:#ffffff;text-anchor:middle;dominant-baseline:central}.u1{font-size:5px}.u2{font-size:6px}.u3{font-size:8px;fill:#d9ecff}' +
+  `.b{opacity:0;animation:pop ${FLASH_CYCLE}s ease-out infinite}@keyframes pop{0%{opacity:0;transform:scale(.1)}${pct(0.06)}{opacity:1}` +
+  `${pct(1.1)},100%{opacity:0;transform:scale(1.6)}}` +
+  `.c{opacity:0;font-size:15px;animation:core ${FLASH_CYCLE}s ease-out infinite}@keyframes core{0%{opacity:0;transform:scale(.4)}` +
+  `${pct(0.05)}{opacity:1;transform:scale(1.2)}${pct(0.45)},100%{opacity:0;transform:scale(.6)}}.rp .h{fill:#8cc4ff;fill-opacity:.45;font-size:34px}`
 
-// 窓の幅いっぱい・下端に揃える
-const RIPPLE_SVG = `<svg viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMax slice"><g class="rp" transform="translate(800 1000)">${FIELD_SVG}<g class="s">${SPARKS}</g></g></svg>`
+const RIPPLE_SVG = `<g class="rp"><pattern id="pd" x="-${R}" y="-${R}" width="${R * 2}" height="${R * 2}" patternUnits="userSpaceOnUse">${DUST}</pattern>${BURSTS}</g>`
 
 const STYLE_END = SCENE.indexOf('</style>')
 const END = SCENE.lastIndexOf('</svg>')
