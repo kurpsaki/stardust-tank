@@ -195,8 +195,6 @@ for (let i = 0; i < 5; i++) {
   )
 }
 
-const PROMPT = '~/aquarium $ feed --goldfish '
-
 const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid slice">
 <style>
 text{font-family:ui-monospace,Menlo,Consolas,"DejaVu Sans Mono",monospace;font-size:${FS}px;white-space:pre}
@@ -217,9 +215,6 @@ ${smallCss}
 .bub text{font-size:5px}.bh{fill:#5f9ccf;opacity:.55}.br{fill:#cfe6fa}.bs{fill:#ffffff;animation:bs 4.6s ease-in-out infinite alternate}@keyframes bs{from{opacity:.55}to{opacity:1}}.wob{animation:wob 3.6s ease-in-out infinite alternate}@keyframes wob{from{transform:translate(-7px,0px)}to{transform:translate(7px,0px)}}
 .bob{animation:bob 7s ease-in-out infinite alternate}
 @keyframes bob{from{transform:translateY(-14px)}to{transform:translateY(14px)}}
-.cur{fill:#c9ced8;animation:cur 2.4s ease-in-out infinite}@keyframes cur{0%,100%{opacity:1}50%{opacity:.1}}
-.pr{fill:#6b7280}.bg{fill:#08090b;opacity:.88}
-.pr,.cur{font-size:12px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important}.lf:first-child{opacity:1}.tf{opacity:0}.st{opacity:.5}.sf:first-child{opacity:1}.bub{opacity:0}}
 </style>
 <defs>${TILES}<radialGradient id="v" cx=".5" cy=".5" r=".75"><stop offset=".25" stop-color="#08090b" stop-opacity=".93"/><stop offset=".62" stop-color="#08090b" stop-opacity="0"/></radialGradient></defs>
@@ -230,7 +225,6 @@ ${FIELD}
 ${bubbles.join('')}
 ${smallEls}
 ${fishEls}
-<rect class="bg" x="32" y="${H - 58}" width="${(PROMPT.length + 2) * 7.2 + 16}" height="26" rx="3"/><text class="pr" x="40" y="${H - 40}">${esc(PROMPT)}</text><text class="cur" x="${40 + PROMPT.length * 7.2}" y="${H - 40}">_</text>
 </svg>`
 
 // 注意（2026-11-15 に実機で確認）: デスクトップは背景の SVG を描いた直後だけ動かし、すぐ静止画に差し替えることがある。
