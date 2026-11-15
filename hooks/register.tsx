@@ -7,7 +7,7 @@ import { problems, theme } from './palette.js'
 import { sceneFor } from './pulse.js'
 
 
-const PLUGIN = 'ascii-drift'
+const PLUGIN = 'stardust-tank'
 
 const LOOK: ThemeSetArgs = {
   colors: theme,
@@ -20,7 +20,7 @@ const LOOK: ThemeSetArgs = {
   },
 }
 
-const pulse = atom({ plugin: 'ascii-drift', key: 'pulse' } as const, { mode: 'idle', start: 0, t0: 0 } as Pulse)
+const pulse = atom({ plugin: 'stardust-tank', key: 'pulse' } as const, { mode: 'idle', start: 0, t0: 0 } as Pulse)
 
 /**
  * 背景の状態を切り替える。切り替えるたびに背景は描き直されるので、そのときの経過秒数を t0 に入れて

@@ -1,10 +1,10 @@
 import { expect, test } from 'claude-code/testing'
 
 const BACKDROP = {
-  plugin: 'ascii-drift',
+  plugin: 'stardust-tank',
   component: 'Backdrop',
   requestId: 'backdrop',
-  props: { scene: 'ascii-drift', plugin: 'ascii-drift', glass: { blur: 14, opacity: 0.42 } },
+  props: { scene: 'stardust-tank', plugin: 'stardust-tank', glass: { blur: 14, opacity: 0.42 } },
 } as const
 
 // 背景の SVG の大きさの上限。資料上は 131,072 字だが、実機では 129,992 字の絵が描いた数秒後に静止画へ差し替わり、

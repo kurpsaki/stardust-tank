@@ -9,6 +9,6 @@ export type Pulse = {
 
 declare module 'claude-code' {
   interface PluginState {
-    'ascii-drift': { pulse: Pulse }
+    'stardust-tank': { pulse: Pulse }
   }
 }

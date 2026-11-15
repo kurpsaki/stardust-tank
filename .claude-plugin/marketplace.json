@@ -1,12 +1,12 @@
 {
-  "name": "ascii-drift",
+  "name": "stardust-tank",
   "owner": {
     "name": "kurpsaki"
   },
-  "description": "ascii-drift: a dark ASCII theme for the Claude desktop app, with drifting stardust and an ASCII goldfish.",
+  "description": "stardust-tank: a dark ASCII theme for the Claude desktop app, a tank of drifting stardust with ASCII goldfish.",
   "plugins": [
     {
-      "name": "ascii-drift",
+      "name": "stardust-tank",
       "source": "./"
     }
   ]

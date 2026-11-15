@@ -2,7 +2,7 @@ import { makeColors } from './make-colors.js'
 
 // 黒に近い無彩色。面どうしは明度を数%だけ離し、文字は背景の ASCII より常に明るく。
 export const { theme, problems } = makeColors({
-  label: 'ASCII Drift',
+  label: 'Stardust Tank',
   only: 'dark',
   roles: {
     accent: '#8ab4d6',

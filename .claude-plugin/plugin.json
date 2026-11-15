@@ -1,13 +1,13 @@
 {
-  "name": "ascii-drift",
+  "name": "stardust-tank",
   "version": "0.11.1",
   "description": "Dark ASCII theme: fine stardust in three layers of depth with twinkling stars, a fine ASCII goldfish from real footage, and a sparkle of characters when Claude gets to work.",
   "author": {
     "name": "kurpsaki",
     "url": "https://github.com/kurpsaki"
   },
-  "homepage": "https://github.com/kurpsaki/ascii-drift",
-  "repository": "https://github.com/kurpsaki/ascii-drift",
+  "homepage": "https://github.com/kurpsaki/stardust-tank",
+  "repository": "https://github.com/kurpsaki/stardust-tank",
   "license": "MIT",
   "keywords": [
     "theme",

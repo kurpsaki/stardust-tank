@@ -1,4 +1,4 @@
-# ascii-drift
+# stardust-tank
 
 A dark theme for the Claude desktop app. Behind the conversation, fine ASCII stardust drifts in three layers of depth (tiny and dim far away, larger and brighter up close), and bright stars twinkle here and there. A goldfish rendered from real footage into fine ASCII swims across, stops partway, turns around and swims back, while a smaller one passes the other way and bubbles drawn in fine characters rise and wobble. The middle of the screen stays dark so your text is always the brightest thing on it.
 
@@ -13,16 +13,16 @@ The backdrop also follows Claude: when you send a message, tiny characters spark
 At the prompt of a Claude Code terminal session:
 
 ```
-/plugin install ascii-drift --marketplace kurpsaki/ascii-drift
+/plugin install stardust-tank --marketplace kurpsaki/stardust-tank
 ```
 
 Answer `y` to add the marketplace, then pick a scope (user is first). From a shell:
 
 ```bash
-claude plugin install ascii-drift --marketplace kurpsaki/ascii-drift
+claude plugin install stardust-tank --marketplace kurpsaki/stardust-tank
 ```
 
-In the desktop app, where `/plugin` does not run: click + next to the prompt box, then Plugins, Add marketplace with `kurpsaki/ascii-drift`, then Add plugin.
+In the desktop app, where `/plugin` does not run: click + next to the prompt box, then Plugins, Add marketplace with `kurpsaki/stardust-tank`, then Add plugin.
 
 The backdrop appears in the desktop app from the next session (or after `/reload-plugins`). To turn it off, disable or uninstall the plugin and start a new session.
 
