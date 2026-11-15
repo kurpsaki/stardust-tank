@@ -115,21 +115,26 @@ const TURN_X = 860
 // ループ絵が出始める一瞬に右向きの魚がうっすら重なって見えた（ユーザー指摘「ターンしてから一瞬おかしくなる」）
 const FLIP_AT = (TURN_AT + BACK_AT) / 2
 const TN = FISH.turn.frames.length
-const pc = v => `${v.toFixed(3)}%`
+const pc = v => `${v.toFixed(2)}%`
+// 金魚のコマは透明な間も描画の手間に数えられ、絵の重さの大半を占めていた（2026-11-15 にブラウザで計測）。
+// 重いと Mac が忙しいときに描画が追いつかず、デスクトップが背景を静止画に差し替える（金魚が消えて止まる）。
+// 透明な間は visibility:hidden にして描かせない。visible と hidden の間は変わる途中ずっと visible なので、溶け合いは崩れない
+const SHOW = 'opacity:1;visibility:visible'
+const HIDE = 'opacity:0;visibility:hidden'
 const turnCss = FISH.turn.frames
   .map((_, k) => {
     const h = TURN_SPAN / TN
     const c = TURN_AT + (k + 0.5) * h
     const a = k === 0 ? TURN_AT - 0.8 : c - h
     const z = k === TN - 1 ? BACK_AT + 1.0 : c + h
-    return `.tf${k}{animation:tf${k} ${P}s linear infinite}@keyframes tf${k}{0%,${pc(a)}{opacity:0}${pc(k === 0 ? TURN_AT : k === TN - 1 ? BACK_AT : c)}${k === 0 ? `,${pc(c)}` : ''}{opacity:1}${pc(z)},100%{opacity:0}}`
+    return `.tf${k}{animation:tf${k} ${P}s linear infinite}@keyframes tf${k}{0%,${pc(a)}{${HIDE}}${pc(k === 0 ? TURN_AT : k === TN - 1 ? BACK_AT : c)}${k === 0 ? `,${pc(c)}` : ''}{${SHOW}}${pc(z)},100%{${HIDE}}}`
   })
   .join('')
 const turnSvg = FISH.turn.frames.map((f, k) => frameSvg(f, `class="tf tf${k}"`)).join('')
 const offL = -BW * SC - 40
 const bigCss = `.big{animation:big ${P}s linear infinite}
 @keyframes big{0%{transform:translate(${offL.toFixed(0)}px,200px)}${pc(TURN_AT)}{transform:translate(${TURN_X}px,200px)}${pc(BACK_AT)}{transform:translate(${TURN_X + 14}px,206px)}100%{transform:translate(${offL.toFixed(0)}px,200px)}}
-.vis{animation:vis ${P}s linear infinite}@keyframes vis{0%,${pc(TURN_AT - 0.3)}{opacity:1}${pc(TURN_AT + 0.4)},${pc(BACK_AT - 0.2)}{opacity:0}${pc(BACK_AT + 0.9)},100%{opacity:1}}
+.vis{animation:vis ${P}s linear infinite}@keyframes vis{0%,${pc(TURN_AT - 0.3)}{${SHOW}}${pc(TURN_AT + 0.4)},${pc(BACK_AT - 0.2)}{${HIDE}}${pc(BACK_AT + 0.9)},100%{${SHOW}}}
 .flip{animation:flip ${P}s linear infinite}@keyframes flip{0%,${pc(FLIP_AT)}{transform:translate(0px,0px) scale(1,1)}${pc(FLIP_AT + 0.01)},100%{transform:translate(${BW}px,0px) scale(-1,1)}}
 ${turnCss}`
 const fishEls = `<g class="big"><g class="bob" style="animation-duration:8s"><g transform="scale(${SC})">
@@ -147,7 +152,7 @@ const smallSvg = FISH.small.frames
   .map((f, k) => frameSvg(f, `class="sf" style="animation-delay:${(((k - 1) / SN) * SMALL_SECS - SMALL_SECS).toFixed(3)}s"`))
   .join('')
 const smallCss = `.sf{opacity:0;animation:sf ${SMALL_SECS.toFixed(3)}s linear infinite}.sf text{font-size:${FFS}px}
-@keyframes sf{0%{opacity:0}${pc(100 / SN)}{opacity:1}${pc(200 / SN)},100%{opacity:0}}
+@keyframes sf{0%{${HIDE}}${pc(100 / SN)}{${SHOW}}${pc(200 / SN)},100%{${HIDE}}}
 .sm{animation:sm 71s linear -24s infinite}@keyframes sm{from{transform:translate(${W + 60}px,640px)}to{transform:translate(${(-SBW * SSC - 60).toFixed(0)}px,640px)}}`
 const smallEls = `<g class="sm"><g class="bob" style="animation-duration:6s"><g transform="scale(${SSC})"><g transform="translate(${SBW} 0) scale(-1 1)">${smallSvg}</g></g></g></g>`
 
@@ -208,7 +213,7 @@ text{font-family:ui-monospace,Menlo,Consolas,"DejaVu Sans Mono",monospace;font-s
 ${STAR_CSS}
 .zr{fill:#e2502e}.zo{fill:#f4913f}.zy{fill:#ffe6b8}
 .lf,.tf{opacity:0}.lf{animation:lf ${LOOP_SECS}s linear infinite}.lf text,.tf text{font-size:${FFS}px}
-@keyframes lf{0%{opacity:0}${pc(100 / LN)}{opacity:1}${pc(200 / LN)},100%{opacity:0}}
+@keyframes lf{0%{${HIDE}}${pc(100 / LN)}{${SHOW}}${pc(200 / LN)},100%{${HIDE}}}
 ${bigCss}
 ${smallCss}
 .bub{animation:rise 24s linear infinite}@keyframes rise{0%{transform:translate(0px,${H + 40}px);opacity:0}10%{opacity:.75}85%{opacity:.6}100%{transform:translate(0px,-60px);opacity:0}}

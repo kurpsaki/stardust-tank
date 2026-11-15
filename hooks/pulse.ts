@@ -2,7 +2,7 @@
 // --t0 に経過秒数を渡して背景は続きから再生させる。
 //
 // デスクトップは、見慣れない書き方の背景を描いた直後に静止画へ差し替える（2026-11-15 に実機で確認）。
-// 公式のテーマ例と同じ書き方だけを使う: <use> は使わない、アニメはすべて繰り返し（infinite）にする、アニメで動かすのは opacity と transform だけ、<style> は1つ、
+// 公式のテーマ例と同じ書き方だけを使う: <use> は使わない、アニメはすべて繰り返し（infinite）にする、アニメで動かすのは opacity と transform（金魚のコマの出し入れだけ visibility も）、<style> は1つ、
 // @media は prefers-reduced-motion だけ、!important・cubic-bezier・fill-mode・SVG 図形のアニメは使わない。
 
 import type { Pulse } from '../types'
@@ -25,7 +25,7 @@ const rnd = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296)
 const GLYPHS = ['*', '+', '.', '*', '+', 'x', '.', ':']
 // 入力欄から画面全体へ広がる波。遅れは10段階のクラスにまとめる（要素ごとに書くと文字数の上限を圧迫する）
 const WAVES = 10
-const SPARKLES = Array.from({ length: 72 }, (_, i) => {
+const SPARKLES = Array.from({ length: 70 }, (_, i) => {
   const x = rnd() * 1600 - 800
   const y = -rnd() * 1000 + 15
   const dist = Math.hypot(x / 1.6, y) / 1000 // 入力欄からの近さ（0〜1くらい）

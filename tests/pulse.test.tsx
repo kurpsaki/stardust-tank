@@ -100,7 +100,7 @@ test('背景の絵は、デスクトップが止めない書き方だけで書�
     expect(media.length).toBeGreaterThan(0)
     expect(media.filter(rule => !/prefers-reduced-motion/.test(rule))).toEqual([])
     expect(source).not.toContain('shape-rendering')
-    // 公式のテーマ例と同じ書き方だけ: <style> は1つ、アニメで動かすのは opacity と transform だけ
+    // 公式のテーマ例と同じ書き方だけ: <style> は1つ、アニメで動かすのは opacity と transform（と visibility）だけ
     expect(source.match(/<style>/g)?.length).toBe(1)
     // 視差効果を減らす用の指定の中（公式と同じ *{animation:none!important}）は対象外
     const outsideReduced = source.replace(/@media \(prefers-reduced-motion[^{]*\{(?:[^{}]*\{[^{}]*\})*\}/g, '')
@@ -113,7 +113,8 @@ test('背景の絵は、デスクトップが止めない書き方だけで書�
         animated.add(prop.slice(1, -1))
       }
     }
-    expect([...animated].filter(prop => prop !== 'opacity' && prop !== 'transform')).toEqual([])
+    // visibility は金魚のコマが透明な間に描かせないため（重いと Mac が忙しいときに背景が止まる）
+    expect([...animated].filter(prop => !['opacity', 'transform', 'visibility'].includes(prop))).toEqual([])
     // <use> は一切使わない。含むだけでデスクトップは背景を静止画に差し替える（2026-11-15 に実機で確認）
     expect(source).not.toContain('<use')
     // アニメはすべて繰り返し（infinite）。1回で終わるアニメを含むと、デスクトップは背景を静止画に差し替える（同日に実機で確認）
