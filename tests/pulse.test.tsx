@@ -48,7 +48,7 @@ test('送信で波紋の背景になり、ターンが終わると戻る（背�
   expect(logs).toEqual([])
   expect(working).toContain('class="rp"')
   // 差し替えても背景の動きは 42.5 秒進んだ所から続く
-  expect(working).toContain('svg{--t0:-42.50s}')
+  expect(working).toContain('svg{--t0:-42.50s;--t1:0.00s}')
   expect(working.length).toBeLessThan(SAFE_LENGTH)
   await busy.unmount()
 
@@ -58,8 +58,14 @@ test('送信で波紋の背景になり、ターンが終わると戻る（背�
   const after = await $.ui.mount({ ...BACKDROP, surface: 'desktop' })
   const settled = await sourceOf(after)
   expect(settled).not.toContain('class="rp"')
-  expect(settled).toContain('svg{--t0:-52.50s}')
+  expect(settled).toContain('svg{--t0:-52.50s;--t1:0.00s}')
   await after.unmount()
+
+  // 状態を切り替えずにアプリが描き直しても（セッションの移動など）、巻き戻らずにその時点の続きから描く
+  now += 30_000
+  const later = await $.ui.mount({ ...BACKDROP, surface: 'desktop' })
+  expect(await sourceOf(later)).toContain('svg{--t0:-82.50s;--t1:-30.00s}')
+  await later.unmount()
 })
 
 test('背景を描くのはデスクトップだけ', async ($, on) => {

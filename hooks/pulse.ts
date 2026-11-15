@@ -29,7 +29,7 @@ const DUST_FLASH = [
 
 const BUSY_CSS =
   DUST_FLASH.map(([k, color, rest, t]) =>
-    `#s${k} g{fill:${color}}.ds${k} rect{opacity:${rest};animation:f${k} ${FLASH_CYCLE}s linear infinite}` +
+    `#s${k} g{fill:${color}}.ds${k} rect{opacity:${rest};animation:f${k} ${FLASH_CYCLE}s linear infinite;animation-delay:var(--t1)}` +
     `@keyframes f${k}{0%,${pct(t)}{opacity:${rest}}${pct(t + 0.2)}{opacity:1}${pct(t + 0.5)}{opacity:${rest}}` +
     `${pct(t + 0.75)}{opacity:1}${pct(t + 1.8)},100%{opacity:${rest}}}`,
   ).join('') + '.st{fill:#ffffff}@media (prefers-reduced-motion:reduce){.ds1 rect,.ds2 rect,.ds3 rect{opacity:.6}.rp{opacity:0}}'
@@ -43,12 +43,12 @@ const rnd = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296)
 const DELAYS = 8
 // 弾け1つ分の粒（模様のタイル1枚が弾け1つ分。繰り返さないので格子に見えない）。中心ほど密に、外ほどまばらに散らす
 const R = 60
-const DUST = Array.from({ length: 22 }, () => {
+const DUST = Array.from({ length: 21 }, () => {
   const r = R * 0.95 * rnd() ** 0.7
   const th = rnd() * Math.PI * 2
   return `<text class="u${1 + Math.floor(rnd() * 3)}" x="${(R + r * Math.cos(th)).toFixed(0)}" y="${(R + r * Math.sin(th)).toFixed(0)}">${".'.:+`*"[Math.floor(rnd() * 7)]}</text>`
 }).join('')
-const BURSTS = Array.from({ length: 12 }, () => {
+const BURSTS = Array.from({ length: 11 }, () => {
   const d = `d${Math.floor(rnd() * DELAYS)}`
   return (
     `<g transform="translate(${(60 + rnd() * 1480).toFixed(0)} ${(180 + rnd() * 640).toFixed(0)}) rotate(${(rnd() * 360).toFixed(0)})">` +
@@ -57,7 +57,7 @@ const BURSTS = Array.from({ length: 12 }, () => {
 }).join('')
 
 const RIPPLE_CSS =
-  Array.from({ length: DELAYS }, (_, k) => `.d${k}{animation-delay:${(0.05 + k * 0.23).toFixed(2)}s}`).join('') +
+  Array.from({ length: DELAYS }, (_, k) => `.d${k}{animation-delay:calc(var(--t1) + ${(0.05 + k * 0.23).toFixed(2)}s)}`).join('') +
   '.rp text{fill:#ffffff;text-anchor:middle;dominant-baseline:central}.u1{font-size:5px}.u2{font-size:6px}.u3{font-size:8px;fill:#d9ecff}' +
   `.b{opacity:0;animation:pop ${FLASH_CYCLE}s ease-out infinite}@keyframes pop{0%{opacity:0;transform:scale(.1)}${pct(0.06)}{opacity:1}` +
   `${pct(1.1)},100%{opacity:0;transform:scale(1.6)}}` +
@@ -69,10 +69,13 @@ const RIPPLE_SVG = `<g class="rp"><pattern id="pd" x="-${R}" y="-${R}" width="${
 const STYLE_END = SCENE.indexOf('</style>')
 const END = SCENE.lastIndexOf('</svg>')
 
-/** いまの状態に合わせた背景。同じ状態なら同じ文字列なので、余計な描き直しは起きない */
-export function sceneFor(pulse: Pulse): string {
-  const css = `svg{--t0:${(-pulse.t0).toFixed(2)}s}` + (pulse.mode === 'busy' ? BUSY_CSS + RIPPLE_CSS : '')
-  const ripple = pulse.mode === 'busy' ? RIPPLE_SVG : ''
+/**
+ * いまの状態に合わせた背景。elapsed は最初に背景を出してからの秒数（金魚などはその続きから動く）、
+ * sinceShift は今の状態に切り替えてからの秒数（送信時のきらめきは送信の瞬間にだけ光り、描き直しても光り直さない）
+ */
+export function sceneFor(mode: Pulse['mode'], elapsed: number, sinceShift: number): string {
+  const css = `svg{--t0:${(-elapsed).toFixed(2)}s;--t1:${(-sinceShift).toFixed(2)}s}` + (mode === 'busy' ? BUSY_CSS + RIPPLE_CSS : '')
+  const ripple = mode === 'busy' ? RIPPLE_SVG : ''
 
   return SCENE.slice(0, STYLE_END) + css + SCENE.slice(STYLE_END, END) + ripple + '</svg>'
 }

@@ -20,11 +20,10 @@ const LOOK: ThemeSetArgs = {
   },
 }
 
-const pulse = atom({ plugin: 'stardust-tank', key: 'pulse' } as const, { mode: 'idle', start: 0, t0: 0 } as Pulse)
+const pulse = atom({ plugin: 'stardust-tank', key: 'pulse' } as const, { mode: 'idle', start: 0, since: 0 } as Pulse)
 
 /**
- * 背景の状態を切り替える。切り替えるたびに背景は描き直されるので、そのときの経過秒数を t0 に入れて
- * 金魚や光の網目が飛ばずに続きから動くようにする。同じ状態への切り替えは何もしない（描き直しを増やさない）。
+ * 背景の状態を切り替える（切り替えた時刻を since に残す）。同じ状態への切り替えは何もしない（描き直しを増やさない）。
  */
 async function shift($: EngineInterface, mode: Pulse['mode']): Promise<void> {
   const now = await $.clock.now()
@@ -36,7 +35,7 @@ async function shift($: EngineInterface, mode: Pulse['mode']): Promise<void> {
 
     const start = was.start === 0 ? now : was.start
 
-    return { mode, start, t0: (now - start) / 1000 }
+    return { mode, start, since: now }
   })
 }
 
@@ -84,9 +83,20 @@ export const register: Register = on => {
     if (e.props.plugin !== PLUGIN || e.surface !== 'desktop' || e.props.scene !== PLUGIN) {
       return next(e)
     }
-    const now = await read($, pulse)
+    const state = await read($, pulse)
+    // 経過秒数は描き直すその時に時計から求める。状態を切り替えた時に決めておくと、アプリがセッションの移動などで
+    // 描き直したときにその時点まで巻き戻り、金魚が消えて前の場所から現れた（ユーザー指摘「シームレスじゃない」）
+    const now = await $.clock.now()
+    // 前の版の状態（since が無い）が残っていても壊れないよう、無い時刻は 0 として扱う
+    const at = (from: number | undefined) => (!from ? 0 : (now - from) / 1000)
     const { Svg } = $.ui.resolve(e)
 
-    return <Svg isInteractive alt="ASCII light drifting underwater, with ASCII goldfish swimming and turning" source={sceneFor(now)} />
+    return (
+      <Svg
+        isInteractive
+        alt="ASCII light drifting underwater, with ASCII goldfish swimming and turning"
+        source={sceneFor(state.mode, at(state.start), at(state.since))}
+      />
+    )
   })
 }

@@ -3,8 +3,8 @@ export type Pulse = {
   mode: 'idle' | 'busy'
   /** 背景を最初に設定した時刻（ミリ秒）。0 はまだ */
   start: number
-  /** いま描き直すときに、背景の動きを何秒進めた所から再生するか */
-  t0: number
+  /** いまの状態に切り替えた時刻（ミリ秒）。送信時のきらめきを、描き直しても光り直さないようにする */
+  since: number
 }
 
 declare module 'claude-code' {
