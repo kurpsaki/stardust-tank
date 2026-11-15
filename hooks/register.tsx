@@ -63,7 +63,7 @@ export const register: Register = on => {
     return next(e)
   })
 
-  // 送信した: 波紋を出し、作業中の背景にする
+  // 送信した: 星屑を光らせ、作業中の背景にする
   on('prompt.submit', async ($, e, next) => {
     await quietly($, shift($, 'busy'))
 
@@ -85,7 +85,7 @@ export const register: Register = on => {
     }
     const state = await read($, pulse)
     // 経過秒数は描き直すその時に時計から求める。状態を切り替えた時に決めておくと、アプリがセッションの移動などで
-    // 描き直したときにその時点まで巻き戻り、金魚が消えて前の場所から現れた（ユーザー指摘「シームレスじゃない」）
+    // 描き直したときにその時点まで巻き戻り、金魚が消えて前の場所から現れてしまう
     const now = await $.clock.now()
     // 前の版の状態（since が無い）が残っていても壊れないよう、無い時刻は 0 として扱う
     const at = (from: number | undefined) => (!from ? 0 : (now - from) / 1000)

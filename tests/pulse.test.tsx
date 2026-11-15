@@ -17,7 +17,7 @@ async function sourceOf(ui: { find: (q: { type: 'Svg' }) => Promise<unknown> }):
   return svg?.props?.source ?? ''
 }
 
-test('送信で波紋の背景になり、ターンが終わると戻る（背景は続きから）', async ($, on) => {
+test('送信で作業中の背景になり、ターンが終わると戻る（背景は続きから）', async ($, on) => {
   on('session.start', (_, e) => ({ cwd: e.cwd }))
   on('theme.set', () => ({ value: { isDrawn: true, requestId: 'backdrop' } }))
   on('prompt.submit', (_, e) => ({ text: e.text }))

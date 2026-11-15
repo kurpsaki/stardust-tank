@@ -9,14 +9,11 @@ import type { Pulse } from '../types'
 
 import { SCENE } from './scene.js'
 
-// 作業中: 星屑の3層と瞬く星を一段明るくする（星だけでは淡すぎて気づかれなかった）。送信の瞬間はそこから強く光る（下）
-// 送信した瞬間: 背景の星屑そのものが強く光り、奥の細かい層から手前の層へ順に2回瞬いて、作業中の明るさに落ち着く。
-// 経緯（2026-11-15、実機で）: 別のきらめきの文字を重ねる案は、画面全体に散らすと「まばら」「全体に出てしまう」、
-// 入力欄のまわりに置こうとすると、入力欄の左右の位置（サイドバーや右のパネルで変わる）が背景に知らされず合わせられなかった。
-// ユーザーの「ダストでいい」で、どこにでもある星屑を光らせる形にした（チャット欄のまわりも自然に光る）。
-// 作業中は星屑の色を白に近い明るさにしておき、濃さ（opacity）で「光る→落ち着く」を作る。落ち着いた先は以前の作業中の明るさ。
-// 1回で終わるアニメを含むとデスクトップは背景を止める（2026-11-15 に実機で確認）。周期を長くした繰り返しにして、
-// 最初の数秒だけ光る。送信のたびに背景が描き直されるので、見た目は「送信ごとに1回」
+// 作業中: 星屑の3層を白に近い色にし、濃さ（opacity）で「強く光る → 作業中の明るさに落ち着く」を作る。
+// 送信の瞬間、奥の細かい層から手前の層へ順に2回瞬く。星屑は画面のどこにでもあるので、入力欄の位置
+// （サイドバーや右のパネルで変わり、背景には知らされない）に合わせなくても、チャット欄のまわりを含めて光る。
+// 1回で終わるアニメを含むとデスクトップは背景を止める。周期を長くした繰り返しにして最初の数秒だけ光らせ、
+// 描き直しても光り直さないよう、送信からの秒数（--t1）だけ進めて再生する
 const FLASH_CYCLE = 300
 const pct = (secs: number) => `${((secs / FLASH_CYCLE) * 100).toFixed(3)}%`
 
@@ -34,7 +31,7 @@ const BUSY_CSS =
     `${pct(t + 0.75)}{opacity:1}${pct(t + 1.8)},100%{opacity:${rest}}}`,
   ).join('') + '.st{fill:#ffffff}@media (prefers-reduced-motion:reduce){.ds1 rect,.ds2 rect,.ds3 rect{opacity:.6}.rp{opacity:0}}'
 
-// さらに、画面のあちこちで細かいダストが弾ける（ユーザーの「画面ランダムのがいい」「細かいキラキラのダストが弾ける感じ」）。
+// さらに、画面のあちこちで細かいダストが弾ける。
 // 細かい粒を弾け1つ分の模様にし、点に縮めた所から一気に広げる。模様も一緒に広がるので、粒どうしが離れて飛び散って見える。
 // 弾ける瞬間に中心で白い星が光り、後ろに淡い青の大きな + を重ねて光のにじみにする（ぼかしの光の玉は使わない）。
 // 横長の窓では絵の上下が切れるので、縦は見えやすい中ほど（y 180〜820）に寄せる
@@ -56,7 +53,7 @@ const BURSTS = Array.from({ length: 11 }, () => {
   )
 }).join('')
 
-const RIPPLE_CSS =
+const BURST_CSS =
   Array.from({ length: DELAYS }, (_, k) => `.d${k}{animation-delay:calc(var(--t1) + ${(0.05 + k * 0.23).toFixed(2)}s)}`).join('') +
   '.rp text{fill:#ffffff;text-anchor:middle;dominant-baseline:central}.u1{font-size:5px}.u2{font-size:6px}.u3{font-size:8px;fill:#d9ecff}' +
   `.b{opacity:0;animation:pop ${FLASH_CYCLE}s ease-out infinite}@keyframes pop{0%{opacity:0;transform:scale(.1)}${pct(0.06)}{opacity:1}` +
@@ -64,7 +61,7 @@ const RIPPLE_CSS =
   `.c{opacity:0;font-size:15px;animation:core ${FLASH_CYCLE}s ease-out infinite}@keyframes core{0%{opacity:0;transform:scale(.4)}` +
   `${pct(0.05)}{opacity:1;transform:scale(1.2)}${pct(0.45)},100%{opacity:0;transform:scale(.6)}}.rp .h{fill:#8cc4ff;fill-opacity:.45;font-size:34px}`
 
-const RIPPLE_SVG = `<g class="rp"><pattern id="pd" x="-${R}" y="-${R}" width="${R * 2}" height="${R * 2}" patternUnits="userSpaceOnUse">${DUST}</pattern>${BURSTS}</g>`
+const BURST_SVG = `<g class="rp"><pattern id="pd" x="-${R}" y="-${R}" width="${R * 2}" height="${R * 2}" patternUnits="userSpaceOnUse">${DUST}</pattern>${BURSTS}</g>`
 
 const STYLE_END = SCENE.indexOf('</style>')
 const END = SCENE.lastIndexOf('</svg>')
@@ -74,8 +71,8 @@ const END = SCENE.lastIndexOf('</svg>')
  * sinceShift は今の状態に切り替えてからの秒数（送信時のきらめきは送信の瞬間にだけ光り、描き直しても光り直さない）
  */
 export function sceneFor(mode: Pulse['mode'], elapsed: number, sinceShift: number): string {
-  const css = `svg{--t0:${(-elapsed).toFixed(2)}s;--t1:${(-sinceShift).toFixed(2)}s}` + (mode === 'busy' ? BUSY_CSS + RIPPLE_CSS : '')
-  const ripple = mode === 'busy' ? RIPPLE_SVG : ''
+  const css = `svg{--t0:${(-elapsed).toFixed(2)}s;--t1:${(-sinceShift).toFixed(2)}s}` + (mode === 'busy' ? BUSY_CSS + BURST_CSS : '')
+  const bursts = mode === 'busy' ? BURST_SVG : ''
 
-  return SCENE.slice(0, STYLE_END) + css + SCENE.slice(STYLE_END, END) + ripple + '</svg>'
+  return SCENE.slice(0, STYLE_END) + css + SCENE.slice(STYLE_END, END) + bursts + '</svg>'
 }

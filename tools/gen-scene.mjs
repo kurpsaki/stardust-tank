@@ -18,7 +18,7 @@ const FS = 6 // 文字の既定の大きさ（各層は自分の大きさを持�
 const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 const TAU = Math.PI * 2
 
-// 背景は「星屑の水槽」: 画面全体に細かい粒を、奥行きのある3層で敷く（ユーザーが3案から選んだ案）。
+// 背景は「星屑の水槽」: 画面全体に細かい粒を、奥行きのある3層で敷く。
 // 奥ほど小さく暗く密に、手前ほど大きく明るくまばら。層ごとに別の向き・周期でゆっくり揺れるので奥行きが出る。
 // 各層は小さなタイルを模様（pattern）として敷く。タイルの大きさと角度を層ごとに変えて、繰り返しを目立たなくする。
 // <use> で使い回すとデスクトップが背景を止めるので、pattern で敷く（2026-11-15 に実機で確認）
@@ -106,13 +106,13 @@ const loopSvg = FISH.loop.frames
 
 // 大きい1匹の振り付け（周期 P 秒）: 右へ泳ぐ → 振り返る → 左へ泳ぎ去る
 const P = 52
-const SC = 0.78 * UNIT // 大きい1匹の倍率（大きすぎると言われたので小さめ）
+const SC = 0.78 * UNIT // 大きい1匹の倍率（画面の主役になりすぎない大きさ）
 const TURN_AT = 46 // 振り返り始める位置（%）
 const TURN_SPAN = ((FISH.turn.secs / 1.25) / P) * 100 // 振り返りは 1.25 倍速
 const BACK_AT = TURN_AT + TURN_SPAN
 const TURN_X = 860
 // ループ絵の左右反転は、ループ絵が完全に消えている振り返りの途中で済ませる。振り返りの終わりちょうどに反転すると、
-// ループ絵が出始める一瞬に右向きの魚がうっすら重なって見えた（ユーザー指摘「ターンしてから一瞬おかしくなる」）
+// ループ絵が出始める一瞬に右向きの魚がうっすら重なって見えた
 const FLIP_AT = (TURN_AT + BACK_AT) / 2
 const TN = FISH.turn.frames.length
 const pc = v => `${v.toFixed(2)}%`
@@ -156,8 +156,8 @@ const smallCss = `.sf{opacity:0;animation:sf ${SMALL_SECS.toFixed(3)}s linear in
 .sm{animation:sm 71s linear -24s infinite}@keyframes sm{from{transform:translate(${W + 60}px,640px)}to{transform:translate(${(-SBW * SSC - 60).toFixed(0)}px,640px)}}`
 const smallEls = `<g class="sm"><g class="bob" style="animation-duration:6s"><g transform="scale(${SSC})"><g transform="translate(${SBW} 0) scale(-1 1)">${smallSvg}</g></g></g></g>`
 
-// 泡: 縁が明るく左上に光の点がある透明な球を、明るさから細かい文字に置き換えて描く（「O がチープ」と言われたため）。
-// 発光は文字そのもので表す（ぼかしの光の玉は「AI っぽい」と嫌われた）: 縁の外に淡い粒のにじみ（bh）、
+// 泡: 縁が明るく左上に光の点がある透明な球を、明るさから細かい文字に置き換えて描く（O の文字で描くと安っぽく見える）。
+// 発光は文字そのもので表す（ぼかしの光の玉は使わない）: 縁の外に淡い粒のにじみ（bh）、
 // 光の当たる左上ほど明るい縁（br）、白い反射点（bs）の3層。反射点だけがゆっくり明るさを変える。
 // ゆらゆら揺れながら昇って消える
 const BCW = 3
@@ -178,7 +178,7 @@ function bubbleSvg(radius) {
       const spec = Math.exp(-(((dx + 0.38) ** 2 + (dy + 0.42) ** 2) / 0.028)) + 0.6 * Math.exp(-(((dx - 0.42) ** 2 + (dy - 0.36) ** 2) / 0.012))
       const put = (k, ch) => { for (const n of Object.keys(line)) line[n] += n === k ? ch : ' ' }
       if (spec > 0.35) put('bs', spec > 0.8 ? '@' : spec > 0.55 ? '*' : '+')
-      else if (rim > 0.2) put('br', '.:;+*'[Math.min(4, Math.floor(rim * 5))]) // o は「チープ」と言われたので使わない
+      else if (rim > 0.2) put('br', '.:;+*'[Math.min(4, Math.floor(rim * 5))]) // o は安っぽく見えるので使わない
       else if (glow > 0.22 && (glow > 0.5 || (c * 7 + r * 3) % 3 !== 0)) put('bh', glow > 0.62 ? ':' : glow > 0.4 ? '.' : "'")
       else put('', ' ')
     }
@@ -235,7 +235,8 @@ ${fishEls}
 // 注意（2026-11-15 に実機で確認）: デスクトップは背景の SVG を描いた直後だけ動かし、すぐ静止画に差し替えることがある。
 // - prefers-reduced-motion 以外の @media や shape-rendering があると止まる（anthropics/claude-code#109770）
 // - @media (prefers-reduced-motion: reduce) が1つも無い絵も止まった。下の style にある1行は消さないこと
-// 画面の形で変えたいときは @media ではなく入れ子の <svg> で位置を決める。
+// 画面の形で位置を変えたいときも @media は使えない。入れ子の <svg> も、ルートに viewBox がある今の作りでは窓の端に合わない
+// （入れ子の基準が切り落とす前の絵になる）。窓の端に合わせるにはルートを width/height 100% だけの枠にする必要がある。
 
 // 背景は Claude の動きに合わせて差し替える（hooks/register.tsx）。差し替えると絵の中の動きは最初からやり直しになるので、
 // すべての動きの開始を --t0 だけずらせるようにしておき、差し替え時に経過秒数を渡して続きから再生する。

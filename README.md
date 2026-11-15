@@ -2,7 +2,7 @@
 
 A dark theme for the Claude desktop app. Behind the conversation, fine ASCII stardust drifts in three layers of depth (tiny and dim far away, larger and brighter up close), and bright stars twinkle here and there. A goldfish rendered from real footage into fine ASCII swims across, stops partway, turns around and swims back, while a smaller one passes the other way and bubbles drawn in fine characters rise and wobble. The middle of the screen stays dark so your text is always the brightest thing on it.
 
-The backdrop also follows Claude: when you send a message, tiny characters sparkle outward from the prompt box across the whole screen; while Claude works, the stardust and stars shine brighter; when the turn ends, it settles again. The fish and the stars carry on from where they were each time.
+The backdrop also follows Claude: when you send a message, the stardust flares up twice and fine dust bursts here and there across the screen; while Claude works, the stardust and stars stay brighter; when the turn ends, it settles again. The fish and the stars carry on from where they were, even when the app redraws the backdrop.
 
 - Dark mode only. Text contrast comes first: the panels are frosted over the backdrop, and body text sits well above 7:1.
 - With "reduce motion" turned on, everything stands still.
