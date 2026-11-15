@@ -200,7 +200,10 @@ for (let i = 0; i < 5; i++) {
   )
 }
 
-const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid slice">
+// 外側の <svg> は窓いっぱいの枠だけにして、絵は入れ子の <svg>（窓の形に合わせて上下か左右を切り落とす）に描く。
+// 外側に viewBox があると、入れ子の位置も切り落とす前の絵が基準になり、窓の下端（入力欄）に合わせられない。
+// 送信時のきらめき（hooks/pulse.ts）は、この外枠に「窓の下端の中央」に固定した別の入れ子で足す
+const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
 <style>
 text{font-family:ui-monospace,Menlo,Consolas,"DejaVu Sans Mono",monospace;font-size:${FS}px;white-space:pre}
 .ds1{animation:ds1 61s ease-in-out infinite alternate}@keyframes ds1{from{transform:translate(-22px,-10px)}to{transform:translate(22px,10px)}}
@@ -222,6 +225,7 @@ ${smallCss}
 @keyframes bob{from{transform:translateY(-14px)}to{transform:translateY(14px)}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important}.lf:first-child{opacity:1}.tf{opacity:0}.st{opacity:.5}.sf:first-child{opacity:1}.bub{opacity:0}}
 </style>
+<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid slice">
 <defs>${TILES}<radialGradient id="v" cx=".5" cy=".5" r=".75"><stop offset=".25" stop-color="#08090b" stop-opacity=".93"/><stop offset=".62" stop-color="#08090b" stop-opacity="0"/></radialGradient></defs>
 <rect width="${W}" height="${H}" fill="#08090b"/>
 ${FIELD}
@@ -230,6 +234,7 @@ ${FIELD}
 ${bubbles.join('')}
 ${smallEls}
 ${fishEls}
+</svg>
 </svg>`
 
 // 注意（2026-11-15 に実機で確認）: デスクトップは背景の SVG を描いた直後だけ動かし、すぐ静止画に差し替えることがある。
